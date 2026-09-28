@@ -1,0 +1,1688 @@
+# Jira-Style Task Manager Upgrade Specification
+
+## 1. IMPORTANT: MODIFY THE EXISTING PROJECT
+
+This is an **upgrade of an existing MERN Task Manager application**.
+
+Do NOT create a new project.
+
+Do NOT delete the existing application and start again.
+
+First inspect the existing:
+
+* Frontend
+* Backend
+* MongoDB/Mongoose models
+* API routes
+* Controllers
+* React components
+* Existing styling
+* Existing environment configuration
+
+Preserve working functionality wherever possible.
+
+The current application is a basic Task Manager.
+
+The goal is to transform it into a **Jira-style project and issue management application**.
+
+The final application should feel like a lightweight Jira-style issue tracker, not a simple personal todo application.
+
+---
+
+# 2. PRODUCT DIRECTION
+
+Current product:
+
+```text
+Basic Task Manager
+```
+
+Target product:
+
+```text
+Project Management + Issue Tracking System
+```
+
+The application should support concepts such as:
+
+```text
+Workspace
+Projects
+Issues
+Issue Types
+Statuses
+Priorities
+Assignees
+Labels
+Comments
+Sprints
+Boards
+Backlog
+Project Dashboard
+```
+
+Do not attempt to reproduce every feature of Jira.
+
+Build a clean, functional **Jira-inspired project management system** with the most important issue-tracking workflows.
+
+---
+
+# 3. CORE PRODUCT MODEL
+
+The application hierarchy should become:
+
+```text
+Workspace
+    │
+    ├── Project
+    │      │
+    │      ├── Backlog
+    │      ├── Sprint
+    │      │
+    │      ├── Issues
+    │      │      ├── Story
+    │      │      ├── Task
+    │      │      ├── Bug
+    │      │      └── Epic
+    │      │
+    │      └── Board
+    │
+    └── Members
+```
+
+For the first version, a single workspace can be used.
+
+The architecture should nevertheless be designed so multiple projects can exist.
+
+---
+
+# 4. IMPORTANT UI CHANGE
+
+The existing interface is likely designed around:
+
+```text
+Task
+Status
+Priority
+Delete
+```
+
+Do not simply rename "Task" to "Issue".
+
+The entire interaction model should be upgraded.
+
+The user should be able to:
+
+```text
+Create Project
+        ↓
+Open Project
+        ↓
+View Project Board
+        ↓
+Create Issue
+        ↓
+Assign Issue
+        ↓
+Move Issue between statuses
+        ↓
+Open Issue Details
+        ↓
+Add comments
+        ↓
+Manage backlog
+        ↓
+Create sprint
+        ↓
+Move backlog issues into sprint
+```
+
+---
+
+# 5. REQUIRED MAIN NAVIGATION
+
+The application should have a Jira-style application layout.
+
+Desktop layout:
+
+```text
+┌────────────────────────────────────────────────────────────┐
+│ Logo / App Name      Search        Create       User       │
+├───────────────┬────────────────────────────────────────────┤
+│               │                                            │
+│ Workspace     │                                            │
+│               │                                            │
+│ Projects      │              Main Content                  │
+│               │                                            │
+│ Project       │                                            │
+│               │                                            │
+│ Overview      │                                            │
+│ Board         │                                            │
+│ Backlog       │                                            │
+│ Sprints       │                                            │
+│ Issues        │                                            │
+│               │                                            │
+│ Settings      │                                            │
+│               │                                            │
+└───────────────┴────────────────────────────────────────────┘
+```
+
+The sidebar must be functional.
+
+Do not add fake navigation items.
+
+---
+
+# 6. PROJECTS
+
+Add project management.
+
+Users should be able to create a project.
+
+Project fields:
+
+```text
+name
+key
+description
+createdAt
+```
+
+Example:
+
+```text
+Name:
+Website Redesign
+
+Key:
+WEB
+
+Description:
+Redesign the company website.
+```
+
+The project key should be used to identify issues.
+
+For example:
+
+```text
+WEB-1
+WEB-2
+WEB-3
+```
+
+---
+
+# 7. ISSUE SYSTEM
+
+Replace the basic task concept with an Issue model.
+
+An issue should contain:
+
+```text
+_id
+projectId
+issueKey
+title
+description
+issueType
+status
+priority
+assignee
+reporter
+labels
+comments
+createdAt
+updatedAt
+```
+
+---
+
+# 8. ISSUE TYPES
+
+Support:
+
+```text
+Task
+Bug
+Story
+Epic
+```
+
+Use Lucide icons where appropriate.
+
+Do not use emojis.
+
+Example:
+
+```text
+Task
+Bug
+Story
+Epic
+```
+
+Issue type must be actual application data.
+
+---
+
+# 9. ISSUE KEY GENERATION
+
+Every issue should receive a project-specific key.
+
+Example:
+
+```text
+WEB-1
+WEB-2
+WEB-3
+```
+
+If another project has key:
+
+```text
+MOB
+```
+
+its issues become:
+
+```text
+MOB-1
+MOB-2
+MOB-3
+```
+
+The key must be generated by the backend.
+
+Do not generate issue IDs only in React.
+
+Do not allow duplicate issue keys.
+
+---
+
+# 10. ISSUE STATUS
+
+Initial statuses:
+
+```text
+TO DO
+IN PROGRESS
+IN REVIEW
+DONE
+```
+
+The board should display issues in these columns.
+
+Example:
+
+```text
+┌─────────────┬──────────────┬──────────────┬─────────────┐
+│ TO DO       │ IN PROGRESS  │ IN REVIEW    │ DONE        │
+├─────────────┼──────────────┼──────────────┼─────────────┤
+│ WEB-12      │ WEB-8        │ WEB-10       │ WEB-4       │
+│ Login UI    │ API work     │ PR review    │ Homepage    │
+│             │              │              │             │
+│ WEB-13      │ WEB-9        │              │ WEB-5       │
+│ Dashboard   │ Database     │              │ Navbar      │
+└─────────────┴──────────────┴──────────────┴─────────────┘
+```
+
+---
+
+# 11. ISSUE PRIORITY
+
+Support:
+
+```text
+Lowest
+Low
+Medium
+High
+Highest
+```
+
+Priority must affect the visual indicator of an issue.
+
+Keep the visual treatment subtle.
+
+Do not create huge colorful badges.
+
+---
+
+# 12. ASSIGNEES
+
+Issues should support assignment.
+
+Example:
+
+```text
+Assignee:
+Aditya Patil
+```
+
+For the first version, a lightweight member model can be used.
+
+Do not build complicated enterprise authentication unless specifically requested.
+
+However, structure the data so authentication can be added later.
+
+---
+
+# 13. REPORTER
+
+Each issue should have a reporter.
+
+Example:
+
+```text
+Reporter:
+Aditya Patil
+```
+
+Use actual application data.
+
+Do not display fake users.
+
+---
+
+# 14. LABELS
+
+Issues should support labels.
+
+Example:
+
+```text
+frontend
+backend
+bug
+urgent
+database
+```
+
+Labels should be actual stored issue data.
+
+Do not use decorative labels that do nothing.
+
+---
+
+# 15. ISSUE DESCRIPTION
+
+The issue description should support meaningful text.
+
+Do not use lorem ipsum.
+
+Example:
+
+```text
+Implement the login form using the existing authentication API.
+
+The form should validate email and password before submission.
+```
+
+---
+
+# 16. ISSUE DETAILS PAGE
+
+Clicking an issue should open a detailed issue view.
+
+Example:
+
+```text
+WEB-23
+
+Implement authentication form
+
+Type: Story
+Priority: High
+Status: In Progress
+Assignee: Aditya Patil
+Reporter: Aditya Patil
+
+Description
+--------------------------------
+Implement the authentication form...
+
+Labels
+--------------------------------
+frontend
+authentication
+
+Comments
+--------------------------------
+Aditya Patil
+I have completed the initial UI.
+
+Activity
+--------------------------------
+Status changed from TO DO to IN PROGRESS
+```
+
+The issue page should allow editing.
+
+---
+
+# 17. COMMENTS
+
+Users should be able to add comments to issues.
+
+Comment fields:
+
+```text
+issueId
+author
+content
+createdAt
+```
+
+Example:
+
+```text
+Add a comment...
+
+[Comment]
+```
+
+Comments must be persisted in MongoDB.
+
+Do not create fake comments.
+
+---
+
+# 18. PROJECT BOARD
+
+The Board is one of the most important features.
+
+Route:
+
+```text
+/projects/:projectId/board
+```
+
+The board should contain:
+
+```text
+TO DO
+IN PROGRESS
+IN REVIEW
+DONE
+```
+
+Issues should be displayed as cards.
+
+---
+
+# 19. DRAG AND DROP
+
+Implement drag-and-drop issue movement between board columns.
+
+Example:
+
+```text
+TO DO
+   ↓ drag
+IN PROGRESS
+   ↓ drag
+IN REVIEW
+   ↓ drag
+DONE
+```
+
+When an issue is moved:
+
+1. Update the frontend immediately where appropriate.
+2. Send the status update to the backend.
+3. Persist the new status.
+4. If the API fails, restore the previous state and show an error.
+
+Do not implement drag animation that is unnecessarily complex.
+
+---
+
+# 20. BACKLOG
+
+Add:
+
+```text
+/projects/:projectId/backlog
+```
+
+The backlog should display issues that are not currently assigned to an active sprint.
+
+Example:
+
+```text
+Product Backlog
+
+WEB-31  Improve search
+WEB-32  Add password reset
+WEB-33  Fix mobile navigation
+WEB-34  Add profile page
+```
+
+Allow issues to be added to a sprint.
+
+---
+
+# 21. SPRINTS
+
+Support basic sprint functionality.
+
+Sprint fields:
+
+```text
+name
+projectId
+goal
+startDate
+endDate
+status
+```
+
+Sprint statuses:
+
+```text
+PLANNED
+ACTIVE
+COMPLETED
+```
+
+Example:
+
+```text
+Sprint 3
+Goal:
+Complete authentication module
+
+Start:
+10 Sep 2026
+
+End:
+24 Sep 2026
+
+Status:
+ACTIVE
+```
+
+Do not create fake sprint statistics.
+
+---
+
+# 22. SPRINT PLANNING
+
+Allow issues to be moved:
+
+```text
+Backlog
+    ↓
+Sprint
+```
+
+Issues belonging to the active sprint should appear on the project board.
+
+---
+
+# 23. PROJECT OVERVIEW
+
+Add:
+
+```text
+/projects/:projectId
+```
+
+The project overview should show actual project information.
+
+Example:
+
+```text
+Website Redesign
+WEB
+
+Redesign the company website.
+
+Project navigation:
+
+Board
+Backlog
+Sprints
+Issues
+```
+
+If metrics are displayed, calculate them from actual database records.
+
+Never hard-code:
+
+```text
+75% completed
+42 issues
+12 team members
+```
+
+unless those values actually come from the database.
+
+---
+
+# 24. ISSUE LIST
+
+Add:
+
+```text
+/projects/:projectId/issues
+```
+
+Display issues in a structured table/list.
+
+Columns:
+
+```text
+Key
+Summary
+Type
+Status
+Priority
+Assignee
+Updated
+```
+
+Allow filtering by:
+
+```text
+Status
+Priority
+Issue Type
+Assignee
+Label
+```
+
+Allow search by:
+
+```text
+Issue key
+Title
+Description
+```
+
+---
+
+# 25. SEARCH
+
+Add a global search mechanism.
+
+The search should search real application data.
+
+At minimum search:
+
+```text
+Issue key
+Issue title
+Project name
+```
+
+Example:
+
+```text
+Search...
+
+WEB-23
+authentication
+Website Redesign
+```
+
+Do not create fake search results.
+
+---
+
+# 26. CREATE ISSUE
+
+The main Create button should create an issue.
+
+Fields:
+
+```text
+Project
+Issue Type
+Summary
+Description
+Priority
+Assignee
+Labels
+Sprint
+```
+
+Summary/title is required.
+
+The backend must generate:
+
+```text
+issueKey
+```
+
+---
+
+# 27. EDIT ISSUE
+
+Users should be able to modify:
+
+```text
+Summary
+Description
+Issue Type
+Priority
+Status
+Assignee
+Labels
+Sprint
+```
+
+Use the backend API.
+
+Do not modify only local React state.
+
+---
+
+# 28. DELETE ISSUE
+
+Provide delete functionality.
+
+Before deletion:
+
+```text
+Delete issue?
+
+WEB-23
+Implement authentication form
+
+Cancel
+Delete
+```
+
+Delete only after confirmation.
+
+After deletion, update the interface without a full browser reload.
+
+---
+
+# 29. REST API ARCHITECTURE
+
+Add appropriate routes.
+
+Example:
+
+```text
+/api/projects
+/api/projects/:id
+/api/projects/:id/issues
+
+/api/issues
+/api/issues/:id
+
+/api/sprints
+/api/sprints/:id
+
+/api/issues/:id/comments
+```
+
+Use proper HTTP methods.
+
+Example:
+
+```text
+POST
+GET
+PUT
+DELETE
+```
+
+Do not put everything into one route file.
+
+---
+
+# 30. Backend Structure
+
+Extend the existing backend.
+
+Recommended structure:
+
+```text
+backend/
+│
+├── config/
+│   └── db.js
+│
+├── controllers/
+│   ├── projectController.js
+│   ├── issueController.js
+│   ├── sprintController.js
+│   └── commentController.js
+│
+├── models/
+│   ├── Project.js
+│   ├── Issue.js
+│   ├── Sprint.js
+│   └── Comment.js
+│
+├── routes/
+│   ├── projectRoutes.js
+│   ├── issueRoutes.js
+│   ├── sprintRoutes.js
+│   └── commentRoutes.js
+│
+├── middleware/
+│   └── errorMiddleware.js
+│
+├── .env
+├── .env.example
+├── server.js
+└── package.json
+```
+
+Preserve existing working files where practical.
+
+---
+
+# 31. MongoDB Relationships
+
+Use references between documents.
+
+Example:
+
+```text
+Project
+   ↓
+projectId
+   ↓
+Issue
+   ↓
+Sprint
+```
+
+Issue should reference:
+
+```text
+projectId
+sprintId
+assignee
+reporter
+```
+
+Do not duplicate complete project objects inside every issue.
+
+---
+
+# 32. Frontend Structure
+
+Refactor the existing frontend toward:
+
+```text
+frontend/src/
+│
+├── components/
+│   ├── layout/
+│   │   ├── Sidebar.jsx
+│   │   ├── Navbar.jsx
+│   │   └── ProjectSidebar.jsx
+│   │
+│   ├── issues/
+│   │   ├── IssueCard.jsx
+│   │   ├── IssueForm.jsx
+│   │   ├── IssueDetails.jsx
+│   │   ├── IssueFilters.jsx
+│   │   └── IssueList.jsx
+│   │
+│   ├── board/
+│   │   ├── Board.jsx
+│   │   ├── BoardColumn.jsx
+│   │   └── DraggableIssue.jsx
+│   │
+│   ├── backlog/
+│   │   └── Backlog.jsx
+│   │
+│   └── common/
+│       ├── Modal.jsx
+│       ├── EmptyState.jsx
+│       └── LoadingState.jsx
+│
+├── pages/
+│   ├── Dashboard.jsx
+│   ├── Projects.jsx
+│   ├── ProjectOverview.jsx
+│   ├── ProjectBoard.jsx
+│   ├── ProjectBacklog.jsx
+│   ├── ProjectIssues.jsx
+│   ├── IssuePage.jsx
+│   ├── Sprints.jsx
+│   ├── PrivacyPolicy.jsx
+│   └── Terms.jsx
+│
+├── services/
+│   ├── projectService.js
+│   ├── issueService.js
+│   ├── sprintService.js
+│   └── commentService.js
+│
+├── App.jsx
+├── main.jsx
+└── index.css
+```
+
+Adjust the exact structure if the existing project already has an equivalent organization.
+
+Do not duplicate functionality unnecessarily.
+
+---
+
+# 33. ROUTES
+
+Implement:
+
+```text
+/
+```
+
+Dashboard
+
+```text
+/projects
+```
+
+Projects
+
+```text
+/projects/:projectId
+```
+
+Project overview
+
+```text
+/projects/:projectId/board
+```
+
+Board
+
+```text
+/projects/:projectId/backlog
+```
+
+Backlog
+
+```text
+/projects/:projectId/issues
+```
+
+Issues
+
+```text
+/projects/:projectId/sprints
+```
+
+Sprints
+
+```text
+/issues/:issueId
+```
+
+Issue details
+
+```text
+/privacy-policy
+/terms
+```
+
+---
+
+# 34. Dashboard
+
+The dashboard should show actual projects and recent issues.
+
+Example:
+
+```text
+Projects
+
+Website Redesign
+WEB
+
+Mobile Application
+MOB
+```
+
+Recent issues should come from the backend.
+
+Do not create fake project data.
+
+If the database is empty:
+
+```text
+No projects yet.
+
+Create your first project.
+```
+
+---
+
+# 35. Visual Design
+
+The application should resemble a professional issue tracker.
+
+Use:
+
+```text
+Clean sidebar
+Compact navbar
+Structured content
+Dense but readable information
+Subtle borders
+Neutral backgrounds
+Clear typography
+Small status indicators
+Functional icons
+```
+
+Do not copy Jira branding, logos, proprietary assets, or exact visual identity.
+
+Build an original interface inspired by the general concept of project-management software.
+
+---
+
+# 36. Strict Design Restrictions
+
+Continue enforcing the original design rules.
+
+Absolutely NO:
+
+```text
+Purple gradients
+Fake testimonials
+Fake reviews
+Fake customer logos
+Fake customer counters
+Fake statistics
+Fake metrics
+Fake project activity
+Fake comments
+Fake users
+Fake avatars
+Fake issue counts
+Fake productivity percentages
+Emoji icons
+Pill-shaped buttons
+Huge hero sections
+Vague marketing copy
+AI-generated stock photos
+Decorative AI images
+Cursor animations
+Parallax
+Crazy scroll animations
+Animated backgrounds
+Excessive glassmorphism
+Excessive rounded cards
+Unnecessary gradients
+Made with AI labels
+Builder badges
+Template branding
+Lorem ipsum
+```
+
+---
+
+# 37. Do Not Make It Look Like a Todo App
+
+This is critical.
+
+Avoid UI such as:
+
+```text
+My Tasks
+☐ Buy groceries
+☐ Learn React
+☐ Finish assignment
+```
+
+The product should instead communicate:
+
+```text
+Project
+Issue
+Issue Type
+Priority
+Status
+Assignee
+Sprint
+Board
+Backlog
+```
+
+The application should feel like a software development project-management system.
+
+---
+
+# 38. Board UX
+
+The board should prioritize information density.
+
+Each issue card should show:
+
+```text
+WEB-24
+
+Implement login API
+
+[Story icon]
+High
+
+Aditya Patil
+```
+
+Status is determined by the column.
+
+Do not repeat excessive information.
+
+---
+
+# 39. Issue Details UX
+
+Issue details should feel like an actual issue-tracking system.
+
+Recommended layout:
+
+```text
+┌────────────────────────────────────────────────────┐
+│ WEB-24                                             │
+│ Implement login API                          ...   │
+├────────────────────────────────────────────────────┤
+│                                                    │
+│ Description                                        │
+│                                                    │
+│ Implement authentication endpoint...               │
+│                                                    │
+│ Comments                                           │
+│                                                    │
+│ Add a comment...                                   │
+│                                                    │
+├───────────────────────────┬────────────────────────┤
+│                           │ Status                 │
+│                           │ In Progress            │
+│                           │                        │
+│                           │ Priority               │
+│                           │ High                   │
+│                           │                        │
+│                           │ Assignee               │
+│                           │ Aditya Patil           │
+│                           │                        │
+│                           │ Sprint                 │
+│                           │ Sprint 3               │
+└───────────────────────────┴────────────────────────┘
+```
+
+---
+
+# 40. Authentication
+
+Do NOT build fake authentication.
+
+If authentication does not currently exist, leave the architecture ready for it.
+
+Do not display:
+
+```text
+Logged in as Admin
+```
+
+unless an actual authenticated user exists.
+
+Do not create fake user accounts.
+
+Authentication can be added as a separate phase later.
+
+---
+
+# 41. Existing Task Migration
+
+The existing application contains basic Tasks.
+
+Do not automatically destroy existing task data.
+
+Determine whether existing tasks can reasonably be migrated.
+
+If migration is practical:
+
+```text
+Task → Issue
+```
+
+Map:
+
+```text
+title → title
+description → description
+status → status
+priority → priority
+createdAt → createdAt
+```
+
+Assign them to an appropriate project.
+
+If migration cannot safely be performed automatically, preserve the existing model and implement a controlled migration strategy.
+
+Do not silently delete existing MongoDB data.
+
+---
+
+# 42. Existing Functionality
+
+Before changing code:
+
+1. Inspect the existing project.
+2. Identify working features.
+3. Reuse existing API logic where possible.
+4. Reuse existing components where practical.
+5. Refactor instead of duplicating.
+6. Preserve environment configuration.
+7. Do not delete working functionality without a reason.
+
+---
+
+# 43. API Error Handling
+
+Use consistent responses.
+
+Example:
+
+```json
+{
+  "success": false,
+  "message": "Issue not found"
+}
+```
+
+Use:
+
+```text
+400
+404
+500
+```
+
+appropriately.
+
+Do not expose database stack traces.
+
+---
+
+# 44. Loading / Empty / Error States
+
+Every major screen must support:
+
+```text
+Loading
+Success
+Empty
+Error
+```
+
+Examples:
+
+```text
+Loading projects...
+
+No projects yet.
+
+Unable to load projects.
+Try again.
+```
+
+These must correspond to real application states.
+
+---
+
+# 45. No Fake Data
+
+This is a strict requirement.
+
+Do not add fake:
+
+```text
+Projects
+Issues
+Users
+Comments
+Metrics
+Activity
+Sprints
+Statistics
+```
+
+for visual purposes.
+
+If seed data is required for development, clearly separate it into a development seed script and do not display it as real production data.
+
+---
+
+# 46. Responsive Design
+
+Desktop:
+
+```text
+Sidebar + main content
+```
+
+Tablet:
+
+```text
+Collapsible sidebar
+```
+
+Mobile:
+
+```text
+Mobile navigation
+Single-column issue views
+Horizontally scrollable board only where necessary
+```
+
+Do not make the entire page horizontally scroll.
+
+---
+
+# 47. Search and Filtering
+
+Search and filtering must operate on actual issue data.
+
+Required filters:
+
+```text
+Status
+Priority
+Issue Type
+Assignee
+Sprint
+```
+
+Search:
+
+```text
+Issue key
+Summary
+Description
+```
+
+---
+
+# 48. Favicon and Branding
+
+Preserve the existing favicon requirements.
+
+Use:
+
+```text
+frontend/public/favicon.ico
+```
+
+The favicon must be custom.
+
+Remove:
+
+```text
+Vite logo
+React logo
+Made with AI
+Made with Antigravity
+Builder branding
+```
+
+Do not use Jira's logo or trademarked visual assets.
+
+---
+
+# 49. Legal Pages
+
+Keep:
+
+```text
+/privacy-policy
+/terms
+```
+
+They must remain functional after the upgrade.
+
+Do not remove these routes.
+
+---
+
+# 50. Custom Domain
+
+Keep the application deployment-ready for:
+
+```text
+https://yourdomain.com
+```
+
+Backend:
+
+```text
+https://api.yourdomain.com
+```
+
+Use:
+
+```env
+VITE_API_URL=
+CLIENT_URL=
+```
+
+Do not hard-code deployment URLs throughout the source code.
+
+DNS configuration must follow the selected hosting provider's current instructions.
+
+---
+
+# 51. Development Order
+
+Implement the upgrade in this order:
+
+```text
+1. Inspect existing codebase
+2. Identify current Task model
+3. Identify current API
+4. Identify current React pages/components
+5. Preserve working functionality
+6. Create Project model
+7. Create Issue model
+8. Create Sprint model
+9. Create Comment model
+10. Create project APIs
+11. Create issue APIs
+12. Create sprint APIs
+13. Create comment APIs
+14. Upgrade frontend routing
+15. Build project management
+16. Build issue management
+17. Build issue details
+18. Build board
+19. Add drag-and-drop status movement
+20. Build backlog
+21. Build sprint management
+22. Add comments
+23. Add search/filtering
+24. Add responsive navigation
+25. Preserve legal pages
+26. Preserve favicon
+27. Remove all builder branding
+28. Test backend
+29. Test frontend
+30. Run production build
+31. Fix all errors
+32. Update README
+```
+
+---
+
+# 52. Testing Checklist
+
+Before declaring the upgrade complete, verify:
+
+## Projects
+
+```text
+Create project
+View projects
+Open project
+Project key works
+```
+
+## Issues
+
+```text
+Create issue
+Generate issue key
+View issue
+Edit issue
+Delete issue
+Assign issue
+Change priority
+Change status
+Change issue type
+Add labels
+```
+
+## Board
+
+```text
+Issues appear in correct columns
+Drag issue
+Status persists
+Refresh page
+Status remains correct
+```
+
+## Backlog
+
+```text
+View backlog
+Add issue to sprint
+Remove issue from sprint
+```
+
+## Sprint
+
+```text
+Create sprint
+View sprint
+Start sprint
+Complete sprint
+```
+
+## Comments
+
+```text
+Add comment
+View comments
+Persist comments
+```
+
+## Search
+
+```text
+Search issue key
+Search title
+Search project
+```
+
+## UI
+
+```text
+Desktop works
+Tablet works
+Mobile works
+No horizontal page overflow
+No broken buttons
+No console errors
+No broken routes
+```
+
+---
+
+# 53. Production Verification
+
+Run:
+
+```bash
+npm install
+npm run dev
+```
+
+and verify the application locally.
+
+Run frontend production build:
+
+```bash
+npm run build
+```
+
+Fix all build errors.
+
+Verify:
+
+```text
+Backend starts
+MongoDB connects
+Frontend starts
+API requests succeed
+CRUD works
+Board works
+Backlog works
+Sprints work
+Comments work
+Routes work
+Favicon works
+Legal pages work
+```
+
+---
+
+# 54. Final Product Definition
+
+The final product should be understood as:
+
+> A lightweight project-management and issue-tracking platform for software development teams.
+
+It should allow a user to manage:
+
+```text
+Projects
+    ↓
+Issues
+    ↓
+Sprints
+    ↓
+Board
+    ↓
+Backlog
+    ↓
+Comments
+```
+
+The application must prioritize actual functionality over decorative UI.
+
+---
+
+# 55. FINAL AGENT RULE
+
+Before implementing anything, inspect the existing codebase.
+
+Do not assume the current project structure.
+
+Do not overwrite working files blindly.
+
+Do not delete existing database data.
+
+Do not rebuild the project from zero.
+
+Upgrade the existing Task Manager into the Jira-style application described above.
+
+If an existing feature already works, preserve it and integrate it into the new architecture.
+
+If a requested feature requires a major architectural change, implement the smallest maintainable change that supports the feature.
+
+Do not add features that are not specified merely to make the application look more impressive.
+
+The final result must be a **real working Jira-style issue tracker**, not a static UI mockup.
